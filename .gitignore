@@ -1,4 +1,5 @@
 cache/*
+!cache/.gitkeep
 node_modules/*
 .claude/*
 .serena/*
