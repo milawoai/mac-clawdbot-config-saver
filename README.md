@@ -58,6 +58,7 @@ node server.js
 | **GLM/zai** | API Key | ✅ | 智谱 AI 提供 |
 | **Moonshot** | API Key | ✅ | 月之暗面提供 |
 | **MiniMax** | API Key | ✅ | MiniMax 提供 |
+| **OpenRouter** | API Key | ✅ | OpenRouter 提供 |
 
 ## 📡 API 接口
 
