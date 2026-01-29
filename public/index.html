@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawdbot 配置管理</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 24px;
+      color: #333;
+    }
+    .row {
+      margin-bottom: 16px;
+    }
+    .row-flex {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .status-running {
+      background: #e6f7e6;
+      color: #22c55e;
+    }
+    .status-stopped {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .input-with-btn {
+      display: flex;
+      gap: 8px;
+    }
+    .input-with-btn input {
+      flex: 1;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #2563eb;
+    }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #e5e7eb;
+    }
+    .btn-danger {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #fee2e2;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .api-section {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .hint {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .message-success {
+      background: #f0fdf4;
+      color: #22c55e;
+      border: 1px solid #bbf7d0;
+    }
+    .message-error {
+      background: #fef2f2;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+    }
+    .message-info {
+      background: #eff6ff;
+      color: #3b82f6;
+      border: 1px solid #bfdbfe;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" x-data="app()" x-init="init()">
+    <h1>Clawdbot 配置管理</h1>
+
+    <!-- 消息提示 -->
+    <div x-show="message.text"
+         :class="`message message-${message.type}`"
+         x-text="message.text">
+    </div>
+
+    <!-- 服务状态 -->
+    <div class="row">
+      <div class="label">支持 macOS</div>
+      <div class="row-flex">
+        <span :class="`status-badge ${serviceStatus.running ? 'status-running' : 'status-stopped'}`"
+              x-text="serviceStatus.running ? 'Running' : 'Stopped'">
+        </span>
+        <span x-text="serviceStatus.text"></span>
+      </div>
+    </div>
+
+    <!-- 配置文件路径 -->
+    <div class="row">
+      <div class="label">配置文件路径</div>
+      <div class="input-with-btn">
+        <input type="text" value="~/.clawdbot/clawdbot.json" readonly>
+        <button class="btn btn-secondary" @click="openConfigPage()">打开配置页面</button>
+      </div>
+      <div class="hint" x-text="configHint"></div>
+    </div>
+
+    <!-- 选择提供商 -->
+    <div class="row">
+      <div class="label">选择模型提供商</div>
+      <select x-model="selectedProvider" @change="onProviderChange()">
+        <option value="">请选择...</option>
+        <template x-for="provider in providers" :key="provider.id">
+          <option :value="provider.id" x-text="provider.name"></option>
+        </template>
+      </select>
+    </div>
+
+    <!-- API Key 输入 -->
+    <div x-show="currentProviderInfo?.hasApiKey" class="api-section">
+      <div class="label">API Key</div>
+      <input type="text"
+             x-model="apiKey"
+             placeholder="请输入 API Key">
+      <div class="hint" x-text="currentProviderInfo?.hint"></div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="row btn-group">
+      <button class="btn btn-primary"
+              @click="syncToConfig()"
+              :disabled="!canSync">
+        修改并保存
+      </button>
+      <button class="btn btn-secondary"
+              @click="restoreFromCache()"
+              :disabled="!hasCache">
+        从缓存恢复
+      </button>
+      <button class="btn btn-secondary"
+              @click="configToCache()"
+              :disabled="!currentConfig">
+        保存到缓存
+      </button>
+      <button class="btn btn-danger"
+              @click="clearCache()">
+        清空缓存
+      </button>
+    </div>
+
+    <!-- 缓存信息 -->
+    <div class="hint" style="margin-top: 8px;" x-show="cacheInfo" x-text="cacheInfo"></div>
+  </div>
+
+  <script>
+    function app() {
+      return {
+        // 数据状态
+        providers: [
+          { id: 'codex', name: 'Codex OAuth', hasApiKey: false, hint: '使用 OAuth 认证,无需 API Key' },
+          { id: 'glm', name: 'GLM/zai', hasApiKey: true, hint: '请输入智谱 AI 的 API Key' },
+          { id: 'moonshot', name: 'Moonshot', hasApiKey: true, hint: '请输入 Moonshot AI 的 API Key' },
+          { id: 'minimax', name: 'MiniMax', hasApiKey: true, hint: '请输入 MiniMax 的 API Key' },
+          { id: 'openrouter', name: 'OpenRouter', hasApiKey: true, hint: '请输入 OpenRouter API Key (sk-or-...)' },
+          { id: 'opencode', name: 'Opencode', hasApiKey: true, hint: '请输入 Opencode API Key (sk-...)' }
+        ],
+        selectedProvider: '',
+        apiKey: '',
+        currentConfig: null,
+        currentCache: null,
+        serviceStatus: { running: false, text: '正在检测服务状态...' },
+        configHint: '',
+        message: { text: '', type: 'info' },
+
+        // 计算属性
+        get currentProviderInfo() {
+          return this.providers.find(p => p.id === this.selectedProvider) || null;
+        },
+        get hasCache() {
+          return this.currentCache && this.currentCache.config;
+        },
+        get canSync() {
+          if (!this.selectedProvider) return false;
+          const provider = this.currentProviderInfo;
+          if (provider && provider.hasApiKey) {
+            return this.apiKey.trim().length > 0;
+          }
+          return true;
+        },
+        get cacheInfo() {
+          if (!this.hasCache) return '';
+          const provider = this.currentProviderInfo;
+          const date = new Date(this.currentCache.updatedAt).toLocaleString('zh-CN');
+          return `📦 找到 ${provider.name} 的缓存配置 (保存于 ${date})`;
+        },
+
+        // 初始化
+        async init() {
+          await this.checkServiceStatus();
+          await this.loadConfig();
+        },
+
+        // 显示消息
+        showMessage(text, type = 'info') {
+          this.message = { text, type };
+          setTimeout(() => this.message = { text: '', type: 'info' }, 5000);
+        },
+
+        // 检查服务状态
+        async checkServiceStatus() {
+          try {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            this.serviceStatus = {
+              running: data.running,
+              text: data.status
+            };
+          } catch (error) {
+            this.serviceStatus = {
+              running: false,
+              text: '无法连接到 ClawdBot 服务'
+            };
+          }
+        },
+
+        // 加载配置
+        async loadConfig() {
+          try {
+            const res = await fetch('/api/config');
+            if (res.ok) {
+              this.currentConfig = await res.json();
+              this.configHint = '配置文件已加载';
+              return true;
+            } else {
+              const data = await res.json();
+              this.configHint = data.error || '请先访问 http://127.0.0.1:18789/config 查看配置文件';
+              this.currentConfig = null;
+              return false;
+            }
+          } catch (error) {
+            this.configHint = '请先访问 http://127.0.0.1:18789/config 查看配置文件是否存在';
+            this.currentConfig = null;
+            return false;
+          }
+        },
+
+        // 打开配置页面
+        async openConfigPage() {
+          const res = await fetch('/open-config');
+          const data = await res.json();
+          window.open(data.url, '_blank');
+        },
+
+        // 提供商变更
+        async onProviderChange() {
+          this.apiKey = '';
+          await this.loadProviderCache();
+        },
+
+        // 加载提供商缓存
+        async loadProviderCache() {
+          if (!this.selectedProvider) {
+            this.currentCache = null;
+            return;
+          }
+
+          try {
+            const res = await fetch(`/api/cache/${this.selectedProvider}`);
+            if (res.ok) {
+              this.currentCache = await res.json();
+            } else {
+              this.currentCache = null;
+            }
+          } catch (error) {
+            console.error('Failed to load cache:', error);
+            this.currentCache = null;
+          }
+        },
+
+        // 合并配置
+        mergeConfigWithProvider(config, providerId, apiKey) {
+          const newConfig = JSON.parse(JSON.stringify(config));
+
+          // 清理配置
+          delete newConfig.auth;
+          delete newConfig.models;
+          delete newConfig.env;
+          if (newConfig.agents?.defaults) {
+            delete newConfig.agents.defaults.model;
+            delete newConfig.agents.defaults.models; // 删除复数形式的 models
+          }
+
+          // 确保基础结构存在
+          if (!newConfig.agents) newConfig.agents = {};
+          if (!newConfig.agents.defaults) newConfig.agents.defaults = {};
+
+          // 根据提供商配置
+          switch (providerId) {
+            case 'codex':
+              newConfig.auth = {
+                profiles: {
+                  "openai-codex:default": {
+                    provider: "openai-codex",
+                    mode: "oauth"
+                  }
+                }
+              };
+              newConfig.agents.defaults.model = {
+                primary: "openai-codex/gpt-5.2"
+              };
+              break;
+
+            case 'minimax':
+              newConfig.auth = {
+                profiles: {
+                  "minimax:default": {
+                    provider: "minimax",
+                    mode: "api_key"
+                  }
+                }
+              };
+              newConfig.agents.defaults.model = {
+                primary: "minimax/MiniMax-M2.1"
+              };
+              newConfig.models = {
+                mode: "merge",
+                providers: {
+                  minimax: {
+                    baseUrl: "https://api.minimaxi.com/v1",
+                    apiKey: apiKey || "${apikey}",
+                    api: "openai-completions",
+                    models: [
+                      {
+                        id: "MiniMax-M2.1",
+                        name: "MiniMax M2.1",
+                        reasoning: false,
+                        input: ["text"],
+                        cost: {
+                          input: 0,
+                          output: 0,
+                          cacheRead: 0,
+                          cacheWrite: 0
+                        },
+                        contextWindow: 200000,
+                        maxTokens: 8192
+                      }
+                    ]
+                  }
+                }
+              };
+              break;
+
+            case 'glm':
+              newConfig.auth = {
+                profiles: {
+                  "zai:default": {
+                    provider: "zai",
+                    mode: "api_key"
+                  }
+                }
+              };
+              newConfig.agents.defaults.model = {
+                primary: "zai/glm-4.7"
+              };
+              newConfig.env = {
+                ZAI_API_KEY: apiKey || ""
+              };
+              break;
+
+            case 'moonshot':
+              newConfig.auth = {
+                profiles: {
+                  "moonshot:default": {
+                    provider: "moonshot",
+                    mode: "api_key"
+                  }
+                }
+              };
+              newConfig.agents.defaults.model = {
+                primary: "moonshot/kimi-k2-0905-preview"
+              };
+              newConfig.models = {
+                mode: "merge",
+                providers: {
+                  moonshot: {
+                    baseUrl: "https://api.moonshot.cn/v1",
+                    apiKey: apiKey || "${apikey}",
+                    api: "openai-completions",
+                    models: [
+                      {
+                        id: "kimi-k2-0905-preview",
+                        name: "Kimi K2 0905 Preview",
+                        reasoning: false,
+                        input: ["text"],
+                        cost: {
+                          input: 0,
+                          output: 0,
+                          cacheRead: 0,
+                          cacheWrite: 0
+                        },
+                        contextWindow: 200000,
+                        maxTokens: 8192
+                      }
+                    ]
+                  }
+                }
+              };
+              break;
+
+            case 'openrouter':
+              newConfig.env = {
+                OPENROUTER_API_KEY: apiKey || ""
+              };
+              newConfig.agents.defaults.model = {
+                primary: "openrouter/anthropic/claude-haiku-4.5"
+              };
+              break;
+
+            case 'opencode':
+              newConfig.env = {
+                OPENCODE_API_KEY: apiKey || ""
+              };
+              newConfig.agents.defaults.model = {
+                primary: "opencode/big-pickle"
+              };
+              break;
+          }
+
+          return newConfig;
+        },
+
+        // 同步到配置文件
+        async syncToConfig() {
+          if (!this.selectedProvider) {
+            this.showMessage('请先选择模型提供商', 'error');
+            return;
+          }
+
+          if (!this.currentConfig) {
+            this.showMessage('请先加载配置文件', 'error');
+            return;
+          }
+
+          const provider = this.currentProviderInfo;
+          const apiKey = provider.hasApiKey ? this.apiKey.trim() : null;
+
+          if (provider.hasApiKey && !apiKey) {
+            this.showMessage('请输入 API Key', 'error');
+            return;
+          }
+
+          const newConfig = this.mergeConfigWithProvider(
+            this.currentConfig,
+            this.selectedProvider,
+            apiKey
+          );
+
+          try {
+            const res = await fetch('/api/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newConfig)
+            });
+
+            if (res.ok) {
+              this.currentConfig = newConfig;
+              this.showMessage('配置已同步到文件', 'success');
+            } else {
+              this.showMessage('同步失败', 'error');
+            }
+          } catch (error) {
+            this.showMessage('同步失败: ' + error.message, 'error');
+          }
+        },
+
+        // 保存到缓存
+        async configToCache() {
+          if (!this.selectedProvider) {
+            this.showMessage('请先选择模型提供商', 'error');
+            return;
+          }
+
+          if (!this.currentConfig) {
+            this.showMessage('请先加载配置文件', 'error');
+            return;
+          }
+
+          const cacheData = {
+            config: this.currentConfig,
+            provider: this.selectedProvider,
+            updatedAt: new Date().toISOString()
+          };
+
+          try {
+            const res = await fetch(`/api/cache/${this.selectedProvider}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cacheData)
+            });
+
+            if (res.ok) {
+              this.currentCache = cacheData;
+              this.showMessage(`已保存 ${this.currentProviderInfo.name} 的完整配置到缓存`, 'success');
+            } else {
+              this.showMessage('保存缓存失败', 'error');
+            }
+          } catch (error) {
+            this.showMessage('保存缓存失败: ' + error.message, 'error');
+          }
+        },
+
+        // 从缓存恢复
+        async restoreFromCache() {
+          if (!this.selectedProvider) {
+            this.showMessage('请先选择模型提供商', 'error');
+            return;
+          }
+
+          if (!this.hasCache) {
+            this.showMessage('没有找到缓存配置', 'error');
+            return;
+          }
+
+          try {
+            const res = await fetch('/api/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.currentCache.config)
+            });
+
+            if (res.ok) {
+              this.currentConfig = this.currentCache.config;
+              this.showMessage(`已从缓存恢复 ${this.currentProviderInfo.name} 的配置`, 'success');
+              await this.loadConfig();
+            } else {
+              this.showMessage('恢复配置失败', 'error');
+            }
+          } catch (error) {
+            this.showMessage('恢复配置失败: ' + error.message, 'error');
+          }
+        },
+
+        // 清空缓存
+        async clearCache() {
+          try {
+            if (this.selectedProvider) {
+              const res = await fetch(`/api/cache/${this.selectedProvider}`, { method: 'DELETE' });
+              if (res.ok) {
+                this.currentCache = null;
+                this.showMessage('已清空当前缓存', 'success');
+              }
+            } else {
+              const res = await fetch('/api/cache', { method: 'DELETE' });
+              if (res.ok) {
+                this.currentCache = null;
+                this.showMessage('已清空所有缓存', 'success');
+              }
+            }
+          } catch (error) {
+            this.showMessage('清空缓存失败: ' + error.message, 'error');
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

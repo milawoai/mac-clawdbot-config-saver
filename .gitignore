@@ -1,0 +1,5 @@
+cache/*
+node_modules/*
+.claude/*
+.serena/*
+..spec-workflow/*
