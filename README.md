@@ -1,8 +1,8 @@
-# ClawdBot 配置管理器
+# OpenClaw 配置管理器
 
-一个用于管理 ClawdBot AI 助手模型提供商配置、API Key 和缓存的 Web 界面工具。
+一个用于管理 OpenClaw AI 助手模型提供商配置、API Key 和缓存的 Web 界面工具。
 
-![ClawdBot 配置管理器](https://img.shields.io/badge/ClawdBot-配置管理器-blue.svg)
+![OpenClaw 配置管理器](https://img.shields.io/badge/OpenClaw-配置管理器-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-要求-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -11,16 +11,16 @@
 - 🌐 **Web 界面** - 提供直观的可视化配置界面
 - 🔧 **多提供商支持** - 支持 Codex、GLM、Moonshot、MiniMax
 - 💾 **本地缓存** - 安全存储 API Key 到本地缓存
-- 📁 **配置同步** - 自动同步配置到 ClawdBot 主服务
+- 📁 **配置同步** - 自动同步配置到 OpenClaw 主服务
 - 🔍 **状态监控** - 实时检查服务运行状态
 
 ## 🏗️ 架构
 
 ```
-ClawdBot 配置管理器
+OpenClaw 配置管理器
 ├── 后端服务 (server.js)     # Express.js REST API 服务器
 ├── 前端界面 (public/)        # 单页面 HTML 应用
-├── 配置文件 (~/.clawdbot/)    # ClawdBot 主配置文件
+├── 配置文件 (~/.openclaw/)    # OpenClaw 主配置文件
 └── 本地缓存 (./cache/)        # API Key 本地缓存
 ```
 
@@ -63,7 +63,7 @@ node server.js
 ## 📡 API 接口
 
 ### 服务状态
-- `GET /api/status` - 检查 ClawdBot 主服务状态
+- `GET /api/status` - 检查 OpenClaw 主服务状态
 
 ### 配置管理
 - `GET /api/config` - 读取配置文件
@@ -77,11 +77,11 @@ node server.js
 - `GET /api/cache` - 列出所有缓存的提供商
 
 ### 实用工具
-- `GET /open-config` - 返回 ClawdBot 配置页面 URL
+- `GET /open-config` - 返回 OpenClaw 配置页面 URL
 
 ## 📝 配置文件结构
 
-### 主配置文件 (~/.clawdbot/clawdbot.json)
+### 主配置文件 (~/.openclaw/openclaw.json)
 
 ```json
 {
@@ -138,12 +138,12 @@ node server.js
 
 ## 📊 使用流程
 
-1. **检查服务状态** - 确认 ClawdBot 主服务运行正常
-2. **加载配置** - 从 ~/.clawdbot/clawdbot.json 读取现有配置
+1. **检查服务状态** - 确认 OpenClaw 主服务运行正常
+2. **加载配置** - 从 ~/.openclaw/openclaw.json 读取现有配置
 3. **选择提供商** - 从下拉菜单选择所需的模型提供商
 4. **输入凭据** - 输入 API Key 或使用 OAuth 授权
 5. **选择操作** - 选择缓存 API Key 或直接同步到配置文件
-6. **应用配置** - 保存更改并应用到 ClawdBot 服务
+6. **应用配置** - 保存更改并应用到 OpenClaw 服务
 
 ## 🐛 故障排除
 
@@ -155,7 +155,7 @@ node server.js
 - 确认防火墙未阻止 localhost 连接
 
 **Q: 配置同步失败**
-- 检查 ~/.clawdbot/ 目录是否存在
+- 检查 ~/.openclaw/ 目录是否存在
 - 确认文件读写权限
 - 查看服务器控制台错误信息
 
@@ -177,4 +177,4 @@ MIT License - 详见 LICENSE 文件
 
 ---
 
-**ClawdBot 配置管理器** - 让 AI 模型配置更简单！ 🚀
+**OpenClaw 配置管理器** - 让 AI 模型配置更简单！ 🚀
