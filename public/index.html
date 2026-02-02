@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clawdbot 配置管理</title>
+  <title>OpenClaw 配置管理</title>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
     * {
@@ -153,7 +153,7 @@
 </head>
 <body>
   <div class="container" x-data="app()" x-init="init()">
-    <h1>Clawdbot 配置管理</h1>
+    <h1>OpenClaw 配置管理</h1>
 
     <!-- 消息提示 -->
     <div x-show="message.text"
@@ -295,7 +295,7 @@
           } catch (error) {
             this.serviceStatus = {
               running: false,
-              text: '无法连接到 ClawdBot 服务'
+              text: '无法连接到 OpenClaw 服务'
             };
           }
         },
@@ -489,7 +489,10 @@
                 OPENROUTER_API_KEY: apiKey || ""
               };
               newConfig.agents.defaults.model = {
-                primary: "openrouter/anthropic/claude-haiku-4.5"
+                primary: "openrouter/deepseek/deepseek-v3.2"
+              };
+              newConfig.agents.defaults.models = {
+                "openrouter/deepseek/deepseek-v3.2": {}
               };
               break;
 

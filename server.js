@@ -9,7 +9,7 @@ const PORT = 8765;
 app.use(express.json());
 app.use(express.static('public'));
 
-const CONFIG_PATH = path.join(os.homedir(), '.clawdbot', 'clawdbot.json');
+const CONFIG_PATH = path.join(os.homedir(), '.openclaw', 'openclaw.json');
 const CACHE_DIR = path.join(__dirname, 'cache');
 
 if (!fs.existsSync(CACHE_DIR)) {
@@ -19,9 +19,9 @@ if (!fs.existsSync(CACHE_DIR)) {
 app.get('/api/status', async (req, res) => {
   try {
     await fetch('http://127.0.0.1:18789/api/status', { timeout: 2000 });
-    res.json({ running: true, status: 'ClawdBot 服务运行中' });
+    res.json({ running: true, status: 'OpenClaw 服务运行中' });
   } catch (error) {
-    res.json({ running: false, status: 'ClawdBot 服务未运行' });
+    res.json({ running: false, status: 'OpenClaw 服务未运行' });
   }
 });
 
@@ -113,5 +113,5 @@ app.get('/open-config', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Clawdbot Config Manager running at http://localhost:${PORT}`);
+  console.log(`OpenClaw Config Manager running at http://localhost:${PORT}`);
 });
